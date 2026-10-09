@@ -1,0 +1,408 @@
+/* Workhorse project page. One stylesheet, no framework: Bulma's grid is three rules here. */
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f5f6f8;
+  --fg: #16181d;
+  --muted: #5d6470;
+  --line: #e2e5ea;
+  --accent: #0072b2;          /* the paper's cIntent blue, the one on the task bars */
+  --accent-soft: #e8f1f8;
+  --radius: 12px;
+  --chip: rgba(16,19,24,.72);   /* a label or hint laid on a picture, the same in either theme */
+  --wrap: 1344px;      /* Bulma's widest container, what both reference pages use */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101216;
+    --bg-alt: #161920;
+    --fg: #e9ecf1;
+    --muted: #9aa3b2;
+    --line: #262b34;
+    --accent: #4da3dd;
+    --accent-soft: #16222c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-padding-top: 72px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 18px/1.7 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; margin: 0 0 .6rem; line-height: 1.15; }
+h2 { font-size: 2.5rem; }            /* Bulma is-2, the size both reference pages use */
+h3 { font-size: clamp(1.25rem, 1.8vw, 1.55rem); margin-top: 2.6rem; }
+p { margin: 0 0 1rem; }
+b { font-weight: 600; }
+
+/* ---------- sticky nav ---------- */
+
+#nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: .7rem max(1.25rem, calc((100vw - var(--wrap)) / 2));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(150%) blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s, background .2s;
+}
+#nav.stuck { border-bottom-color: var(--line); }
+#nav .brand { font-weight: 700; letter-spacing: -0.02em; font-size: 1.05rem; }
+#nav .links { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: .93rem; }
+#nav a { color: var(--muted); text-decoration: none; }
+#nav a:hover { color: var(--fg); }
+#nav a.on { color: var(--accent); font-weight: 600; }
+#nav .brand { color: var(--fg); }
+@media (max-width: 760px) { #nav .links { display: none; } }
+
+/* ---------- hero ---------- */
+
+.hero {
+  position: sticky; top: 0; height: 100vh; min-height: 560px; overflow: hidden; margin-top: -58px;
+  z-index: 1;
+}
+main { position: relative; z-index: 2; background: var(--bg); }        /* slides up over the teaser */
+footer { position: relative; z-index: 2; background: var(--bg); }
+.hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transform: scale(calc(1 + var(--lift, 0) * 0.08)); will-change: transform; }
+.hero-shade {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 80% at 50% 78%, rgba(6,8,12,.72) 0%, rgba(6,8,12,.28) 55%, rgba(6,8,12,0) 100%),
+    linear-gradient(180deg, rgba(8,10,14,.45) 0%, rgba(8,10,14,.12) 35%, rgba(8,10,14,.55) 100%);
+}
+.hero-body {
+  position: relative; height: 100%;
+  opacity: var(--fade, 1); transform: translateY(calc(var(--lift, 0) * -40px)); will-change: opacity, transform;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; color: #fff; padding: 6rem 1.5rem 5rem;
+}
+/* set like BeyondMimic: a 9rem wordmark, a 3.5rem paper title, 1.5rem authors, hard shadow */
+.hero h1 {
+  font-size: 9rem; font-weight: 700; letter-spacing: -0.03em;
+  margin: 0 0 .9rem; text-shadow: 2px 2px 4px rgba(0,0,0,.8);
+}
+.hero .sub {
+  font-size: 3.5rem; font-weight: 600; line-height: 1.18;
+  max-width: 24em; text-wrap: balance; margin: 0 0 2rem; letter-spacing: -0.015em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,.8);
+}
+.hero .authors { margin: 0 0 1.6rem; font-size: 1.5rem; line-height: 1.9; max-width: 48em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,.8); }
+.authors a { white-space: nowrap; }
+.hero .authors a { color: #fff; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.4); padding-bottom: 2px; }
+.hero .authors a:hover { border-bottom-color: #fff; }
+.hero .authors sup { font-size: .66em; color: #c8d0dc; }
+.hero .affil {                                    /* the affiliation note sits in the corner, as BeyondMimic's does */
+  position: absolute; right: 1.5rem; bottom: 1.2rem; margin: 0; max-width: 24em;
+  color: #dde3ec; font-size: .9rem; text-align: right; text-shadow: 2px 2px 4px rgba(0,0,0,.8);
+}
+@media (max-width: 760px) { .hero .affil { position: static; text-align: center; margin: 0 0 1.2rem; } }
+.hero .affil sup { font-size: .78em; }
+.hero .scroll {
+  position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: #b9c2d0; text-decoration: none;
+}
+.hero .scroll::after { content: ""; display: block; width: 1px; height: 26px; margin: .55rem auto 0; background: #b9c2d0; opacity: .6; }
+@media (max-width: 860px) { .hero .sub .brk { display: none; } }
+@media (max-width: 700px) {
+  .authors .brk { display: none; }
+  .hero .authors { font-size: .95rem; line-height: 1.9; }
+  .hero-body { padding: 5rem 1.25rem 4.5rem; }
+}
+
+.buttons { display: flex; gap: .7rem; flex-wrap: wrap; justify-content: center; }
+.btn {
+  display: inline-block; padding: .62rem 1.15rem; border-radius: 999px;
+  background: #fff; color: #16181d; font-weight: 600; font-size: .95rem; text-decoration: none;
+  border: 1px solid transparent; transition: transform .12s, background .2s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.ghost { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.5); }
+.btn.disabled { background: rgba(255,255,255,.08); color: #aab3c0; border-color: rgba(255,255,255,.22); cursor: not-allowed; }
+
+/* ---------- sections ---------- */
+
+.section { padding: 3.4rem 1.25rem; }
+.section.tight { padding-top: .6rem; }
+.section.alt { background: var(--bg-alt); }
+.wrap { max-width: var(--wrap); margin: 0 auto; }
+.wrap.narrow { max-width: 900px; }
+.center { text-align: center; }
+#abstract p { margin-bottom: 1.15rem; }
+#abstract p:last-child { margin-bottom: 0; }
+.wrap.narrow .note.center { margin-top: .9rem; }
+
+/* things rise into place as they come into view; without the script, or on paper, they are
+   simply there */
+.js .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+.js .reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } }
+@media print { .js .reveal { opacity: 1; transform: none; } }
+.lede { color: var(--muted); max-width: 62ch; }
+.lede.center { margin-left: auto; margin-right: auto; }
+.wrap.narrow > p, .wrap.narrow .notes p { font-size: 1.06rem; line-height: 1.72; }
+#abstract p { font-size: .95rem; line-height: 1.5; text-align: justify; }   /* as on both reference pages */
+.note { color: var(--muted); font-size: .93rem; }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4rem; align-items: start; }
+.grid { display: grid; gap: 1.1rem; }
+.grid.one { grid-template-columns: 1fr; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.grid.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) {
+  .two, .grid.two, .grid.three { grid-template-columns: 1fr; }
+}
+
+/* ---------- figures ---------- */
+
+/* Every picture on the page wears one frame: the clips, both views of a take with its camera,
+   the stages you drag, the 3-D scenes and the photo.  A clip in full screen drops it. */
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #0b0d11; }
+video { width: 100%; height: auto; display: block; }
+video:fullscreen { border: 0; border-radius: 0; object-fit: contain; }
+
+figure { margin: 0; }
+figure img { width: 100%; height: auto; display: block; }
+/* a caption introduces its figure, so it sits above it; a lead-in to a row of figures is
+   the same thing without a <figure> to live in */
+.wrap.narrow .figlead { color: var(--fg); font-size: 1.12rem; margin: 0 0 .8rem; line-height: 1.6; max-width: 70ch; }
+figcaption { color: var(--fg); font-size: 1.12rem; margin: 0 0 .8rem; line-height: 1.6; max-width: 70ch; }
+
+/* One gap above every figure, and above the lead-in of a row of figures.  A figure right under
+   its heading keeps the heading's own distance, and a row keeps its lead-in's. */
+.wrap.narrow > :is(figure, .grid, .gallery, .figlead) { margin-top: 2.6rem; }
+.wrap.narrow > :first-child,
+.wrap.narrow > :is(h2, h3) + :is(figure, .grid, .gallery, .figlead),
+.wrap.narrow > .figlead + .grid { margin-top: 0; }
+
+/* A name on a picture -- G1 and H2, recorded and edited, the camera's angles, the robot's
+   camera -- is a dark chip at its top left; what to do with a figure you work is a hint in the
+   same shape at its bottom left. */
+.chip, .hint { position: absolute; z-index: 2; margin: 0; padding: .2rem .55rem; border-radius: 6px;
+  background: var(--chip); color: #fff; font: 600 .8rem/1.3 Inter, sans-serif;
+  white-space: nowrap; pointer-events: none; }
+.chip { left: 10px; top: 10px; }
+.chip.r { left: auto; right: 10px; }
+.hint { left: 10px; bottom: 10px; font-weight: 400; }
+figure.tagged { position: relative; }
+
+/* The control row under the results gallery: play or pause, a scrubber, the time and the sound,
+   one for both views of a take.  The clips that illustrate a figure loop without one. */
+.bar { display: flex; align-items: center; gap: .7rem; margin-top: .55rem; color: var(--muted);
+  font-size: .85rem; font-variant-numeric: tabular-nums; }
+.bar button { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%; background: var(--bg); color: var(--fg); cursor: pointer; }
+.bar svg { width: 11px; height: 11px; fill: currentColor; }
+.bar input { flex: 1; min-width: 0; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.bar span { flex: none; min-width: 6.6em; text-align: right; }
+
+/* A diagram keeps a readable size on a phone and scrolls sideways in its own box instead. */
+.wide { overflow-x: auto; }
+.wide > svg { min-width: 640px; }
+
+:is(video, .duo, .stage, .scene3d canvas, .duo .swap, .bar button, .bar input, .strip button):focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* the ablation under the simulation videos: one row per changed part, rates as in the paper */
+.abl-wrap { overflow-x: auto; }
+.abl { width: 100%; border-collapse: collapse; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.abl th, .abl td { padding: .5rem .7rem; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.abl td:first-child { text-align: left; white-space: normal; min-width: 14rem; }
+.abl thead th { color: var(--muted); font-weight: 500; font-size: .9rem; text-align: center; }
+.abl tr.full td { font-weight: 600; }
+@media (max-width: 700px) {
+  .abl td:first-child { min-width: 0; }
+  .abl th, .abl td { padding: .45rem .4rem; }
+}
+
+/* Figure 7, transcribed: the deployment timeline in the paper's own millimetres and colours,
+   drawn here rather than cropped out of the PDF, so it scales and follows the page's theme. */
+.dep { width: 100%; height: auto; display: block; }
+.dep .band { fill: var(--bg-alt); }
+.dep .ax { stroke: #8C939C; stroke-width: 1.4; }
+.dep .now { stroke: #8C939C; stroke-width: 2.8; }
+.dep .now.dash { stroke-dasharray: 5 4; }
+.dep line.robot { stroke: #009E73; stroke-width: 2.8; fill: none; }
+.dep line.intent { stroke: #0072B2; stroke-width: 2.8; fill: none; }
+.dep .old { stroke: #8C939C; stroke-width: 2.4; stroke-dasharray: 5 4; fill: none; }
+.dep .read { stroke: #009E73; stroke-width: 3.4; }
+.dep .img { fill: var(--bg); stroke: #009E73; stroke-width: 2.4; }
+.dep .ov { fill: #0072B2; opacity: .15; }
+.dep .dotR { fill: #009E73; }
+.dep .dotI { fill: #0072B2; }
+.dep .dotI.past { fill: var(--bg); stroke: #0072B2; stroke-width: 2.8; }   /* already past when the chunk arrives */
+.dep text { stroke: none; }
+.dep .lbl { font: 400 17px Inter, sans-serif; fill: var(--fg); }
+.dep .row { font: 600 17px Inter, sans-serif; }
+.dep .gray { fill: #8C939C; }
+.dep .robot.row, .dep .lbl.robot { fill: #009E73; }
+.dep .intent.row, .dep .lbl.intent { fill: #0072B2; }
+.dep .mid { text-anchor: middle; }
+.dep .end { text-anchor: end; }
+
+/* Figure 5, transcribed: the same geometry in millimetres, the same four colours, drawn here so
+   it scales and follows the dark mode instead of being a screenshot of the PDF. */
+.aug { width: 100%; height: auto; display: block; }
+.aug .ax { stroke: #8C939C; stroke-width: 1.4; }
+.aug .now { stroke: #8C939C; stroke-width: 2.8; }
+.aug .rp { stroke: #8C939C; stroke-width: 1.4; stroke-dasharray: 1.5 4; }
+.aug path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.aug path.demo { stroke: #D55E00; stroke-width: 4.2; }    /* cHuman: recorded from a human */
+.aug path.synth { stroke: #E69F00; stroke-width: 4.2; }   /* cSynth: fabricated for training */
+.aug path.intent { stroke: #0072B2; stroke-width: 2.8; }  /* cIntent: what a model must produce */
+.aug .dot { fill: #0072B2; }
+.aug .lbl { font: 600 19px Inter, sans-serif; }
+.aug .lbl.gray { fill: #8C939C; }
+.aug .lbl.human { fill: #D55E00; }
+.aug .lbl.synth { fill: #E69F00; }
+.aug .lbl.intent { fill: #0072B2; }
+
+/* two figures you work rather than watch: a wipe between two versions of a take, and a warp
+   you drag. Both keep their whole state in the DOM; nothing is stored between visits. */
+.stage { position: relative; touch-action: pan-y; cursor: ew-resize; user-select: none; }
+.stage video, .stage img { pointer-events: none; }   /* the press belongs to the stage, not the frame */
+/* the wipe plays the one file twice, each copy showing its own half of the frame: a copy hidden
+   behind something opaque gets paused out from under us, so both are on screen and the divider
+   is a clip rather than a cover. */
+/* The file holds the two images side by side, 718 px each, with a 4 px white seam between them at
+   columns 718-721: column u of the recorded image is column 722 + u of the edited one.  Each copy
+   is scaled and shifted so the stage shows columns 4-713 of its own image -- the same range of
+   both, so they line up, and clear of the seam and the blur the codec spreads around it.  Each
+   copy fills its box exactly, so no sliver of the copy beneath can show at an edge. */
+.wipe .stage { aspect-ratio: 710 / 404; }
+.wipe .pane { position: absolute; inset: 0; overflow: hidden; }
+.wipe .pane video { position: absolute; top: 0; width: calc(100% * 1440 / 710); height: 100%; object-fit: fill; }
+.wipe .pane.before video { left: calc(-100% * 4 / 710); }
+.wipe .pane.after video { left: calc(-100% * 726 / 710); }
+.wipe .pane.before { clip-path: inset(0 calc(100% - var(--split)) 0 0); }
+.stage .handle { position: absolute; z-index: 2; top: 0; bottom: 0; left: var(--split); width: 2px; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.5); }
+.stage .handle span {
+  position: absolute; top: 50%; left: 50%; width: 34px; height: 34px; transform: translate(-50%, -50%);
+  border: 2px solid #fff; border-radius: 50%; background: rgba(0,0,0,.35); box-shadow: 0 0 6px rgba(0,0,0,.5);
+}
+.stage .handle span::before { content: "\2039\00a0\203a"; position: absolute; inset: 0; color: #fff;
+  font: 600 15px/30px Inter, sans-serif; text-align: center; }
+/* the warp: a recorded frame turned by a shader as the pointer drags, with the camera's own
+   frustum beside it. cursor: grab, because what you are moving is the camera, not a divider. */
+.warp .stage { cursor: grab; }
+.warp .stage:active { cursor: grabbing; }
+.warp canvas.gl { width: 100%; height: auto; display: block; }
+.warp .frustum { position: absolute; left: 12px; bottom: 12px; width: 26%; max-width: 250px;
+  background: rgba(255,255,255,.92); border-radius: 6px; }
+.warp .frustum line { fill: none; stroke-linecap: round; }
+.warp .frustum .was { stroke: #8a8a8a; stroke-width: 1.4; }
+.warp .frustum .now { stroke: #e07b1a; stroke-width: 2.6; }
+.warp .angle { left: auto; right: 10px; font-variant-numeric: tabular-nums; }
+.warp .angle span { color: #ffbe6a; }
+.warp .hint { bottom: auto; top: 10px; }             /* the frustum holds the bottom left */
+/* until its frame arrives there is nothing to turn, and if it cannot run the hint says so */
+.warp:not(.ready) :is(.frustum, .angle) { visibility: hidden; }
+.warp:not(.ready) .stage { cursor: default; }
+
+/* two short notes side by side under a figure */
+.two.notes { gap: 2rem; margin-top: 1.1rem; }
+.two.notes p { margin: 0; }
+
+.steps { counter-reset: step; list-style: none; padding: 0; margin: .8rem 0 0; }
+.steps li {
+  position: relative; padding-left: 2.4rem; margin-bottom: 1rem; color: var(--fg);
+}
+.steps li::before {
+  counter-increment: step; content: counter(step);
+  position: absolute; left: 0; top: .1rem;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: .85rem; font-weight: 700; display: grid; place-items: center;
+}
+
+/* ---------- bibtex ---------- */
+
+.cite { position: relative; }
+.cite pre {
+  background: var(--bg-alt); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.1rem 1.2rem; overflow-x: auto; font-size: .88rem; line-height: 1.55; margin: 0;
+}
+@media (prefers-color-scheme: dark) { .cite pre { background: #0c0e12; } }
+#copy {
+  position: absolute; top: .7rem; right: .7rem;
+  border: 1px solid var(--line); background: var(--bg); color: var(--muted);
+  border-radius: 8px; padding: .3rem .7rem; font: inherit; font-size: .82rem; cursor: pointer;
+}
+#copy:hover { color: var(--fg); }
+
+footer {
+  padding: 2.5rem 1.25rem 3.5rem; text-align: center;
+  color: var(--muted); font-size: .88rem; border-top: 1px solid var(--line);
+}
+
+
+/* the teaser is either full screen or out of the way: no resting place in between */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+
+/* the reference pages drop to Bulma's mobile sizes below 768px; these are the same steps */
+@media (max-width: 1024px) {
+  .hero h1 { font-size: 6rem; }
+  .hero .sub { font-size: 2.6rem; }
+  .hero .authors { font-size: 1.2rem; }
+  h2 { font-size: 2rem; }
+}
+@media (max-width: 700px) {
+  .hero h1 { font-size: 3.6rem; }
+  .hero .sub { font-size: 1.6rem; }
+  .hero .authors { font-size: 1rem; }
+  h2 { font-size: 1.7rem; }
+}
+
+/* The tracker scene: a figure you turn.  It keeps the simulator's dark sky in either theme, from
+   before three.js arrives, so the white chip and hint read on it.  In one column it is capped at
+   most of a screen, so a sideways phone still scrolls past it. */
+.scene3d { position: relative; width: 100%; aspect-ratio: 960 / 1080; cursor: grab;
+  background: linear-gradient(#26405a, #2f4f6d); }
+.scene3d:active { cursor: grabbing; }
+.scene3d canvas { display: block; width: 100%; height: 100%; }
+@media (max-width: 900px) { .scene3d { max-height: 80svh; } }
+.kp-tip { position: absolute; left: 0; top: 0; z-index: 3; padding: 3px 7px; border-radius: 5px;
+  background: var(--fg); color: var(--bg); font: 600 13px Inter, sans-serif;
+  pointer-events: none; opacity: 0; transition: opacity .12s; white-space: nowrap; }
+
+/* A take with the robot's camera: one box of fixed shape, the big view at its bottom left and the
+   small one over its top right, so the two scale as one and stay inside the column.  The small
+   view is the one you click, and the ↗ on it says so; the two trade places.  A take with no
+   camera fills its box. */
+.duo { position: relative; aspect-ratio: 100 / 55.625; container-type: inline-size; }
+.duo .view { position: absolute; transform-origin: 0 0; }
+.duo .big { left: 0; bottom: 0; width: 90%; }
+.duo .small { right: 0; top: 0; width: 37.5%; z-index: 1; cursor: pointer; box-shadow: 0 4px 16px rgba(29,44,57,.3); }
+.duo.solo .big { width: 100%; height: 100%; }
+.duo.solo video { height: 100%; object-fit: cover; }
+/* every result is the robot on its own, said once on each take at the big view's bottom right */
+.duo .auto { left: auto; top: auto; right: calc(10% + 12px); bottom: 12px; padding: .3em .75em; border-radius: 8px;
+  font-size: clamp(.8rem, 1.95cqw, 1.1rem); }
+.duo.solo .auto { right: 12px; }
+.duo .small .chip { left: 6px; top: 6px; padding: .15em .45em; border-radius: 4px;
+  font-size: clamp(9px, 1.45cqw, .8rem); }
+.duo .swap { position: absolute; right: 6px; bottom: 6px; z-index: 2; display: grid; place-items: center;
+  width: clamp(20px, 3.2cqw, 28px); height: clamp(20px, 3.2cqw, 28px); padding: 0; border: 0;
+  border-radius: 6px; background: var(--chip); color: #fff; cursor: pointer;
+  font: 600 clamp(11px, 1.7cqw, 15px)/1 Inter, sans-serif; }
+.duo .big .swap { display: none; }
+
+/* The results, one at a time: a strip of the takes under the box picks the one that plays. */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: .9rem; }
+.strip button { min-width: 0; padding: 0 0 6px; border: 0; border-bottom: 2px solid transparent;
+  background: none; color: var(--muted); font: 500 .85rem/1.3 Inter, sans-serif; cursor: pointer; }
+.strip img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover;
+  margin-bottom: .4rem; border-radius: 6px; opacity: .6; transition: opacity .15s; }
+.strip button:hover img, .strip [aria-selected="true"] img { opacity: 1; }
+.strip [aria-selected="true"] { color: var(--fg); border-bottom-color: var(--fg); }
+@media (max-width: 550px) { .strip { gap: 6px; } .strip button { font-size: .72rem; } }

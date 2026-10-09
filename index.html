@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workhorse: Learning Robust Whole-Body Humanoid Loco-Manipulation from Human Data</title>
+<meta name="description" content="A Unitree G1 sorts boxes with its hands and a kick, catches a thrown box, and topples and climbs a suitcase, learned from robot-free human demonstrations.">
+<link rel="stylesheet" href="./static/fonts/inter.css?v=125">
+<link rel="icon" type="image/png" sizes="64x64" href="./static/images/favicon.png?v=1791082673">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐴%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./static/images/apple-touch-icon.png?v=1791082673">
+<!-- What rises into view is hidden only when a script is there to raise it. -->
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="./static/css/style.css?v=138">
+</head>
+<body>
+
+<nav id="nav">
+  <a class="brand" href="#top">Workhorse</a>
+  <div class="links">
+    <a href="#video">Video</a>
+    <a href="#abstract">Abstract</a>
+    <a href="#data">Data</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#training">Training</a>
+    <a href="#deploy">Deployment</a>
+    <a href="#sim">Simulation</a>
+    <a href="#failures">Failures</a>
+  </div>
+</nav>
+
+<header id="top" class="hero">
+  <!-- The reel is half a megabyte and the still behind it is forty kilobytes, so the page is
+       drawn on the still and the reel is fetched once everything else has arrived. -->
+  <video width="960" height="540" class="hero-bg" muted loop playsinline preload="none"
+         poster="./static/images/hero.jpg?v=1791290034" data-src="./static/videos/hero.mp4?v=1791015675" data-src-h264="./static/videos/hero.h264.mp4"></video>
+  <div class="hero-shade"></div>
+  <div class="hero-body">
+    <h1>Workhorse 🐴</h1>
+    <p class="sub">Learning Robust Whole&#8209;Body Humanoid Loco&#8209;Manipulation from Human Data</p>
+
+    <p class="authors">
+      <a href="https://hsb0508.github.io/">Songbo Hu</a><sup>*</sup>,
+      <a href="https://qiayuanl.github.io/">Qiayuan Liao</a><sup>*</sup>,
+      <a href="https://chiyufeng.me/">Yufeng Chi</a>,
+      <a href="https://kzakka.com/">Kevin Zakka</a>,<br class="brk">
+      <a href="https://people.eecs.berkeley.edu/~ysshao/">Yakun Sophia Shao</a>,
+      <a href="https://people.eecs.berkeley.edu/~pabbeel/">Pieter Abbeel</a>,
+      <a href="https://hybrid-robotics.berkeley.edu/koushil/">Koushil Sreenath</a>
+    </p>
+    <p class="affil">University of California, Berkeley<br>
+      <sup>*</sup>Equal contribution</p>
+
+    <div class="buttons">
+      <a class="btn" href="#video">Video</a>
+      <a class="btn" href="https://www.youtube.com/watch?v=OxEoMba-eEw" target="_blank" rel="noopener">YouTube</a>
+      <a class="btn" href="./static/workhorse.pdf?v=1791315888">Paper</a>
+      <a class="btn" href="https://arxiv.org/abs/2610.09117" target="_blank" rel="noopener">arXiv</a>
+      <span class="btn disabled" title="not released yet">Code</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section id="video" class="section">
+  <div class="wrap narrow">
+    <figure class="reveal">
+      <div class="frame" style="aspect-ratio:16/9">
+        <iframe src="https://www.youtube-nocookie.com/embed/OxEoMba-eEw?rel=0" title="Workhorse video"
+                style="display:block;width:100%;height:100%;border:0" loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="abstract" class="section tight">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Abstract</h2>
+    <p class="reveal">Humanoid robots still struggle to plan contact-rich whole-body manipulation
+    from egocentric RGB and proprioception. Workhorse learns such manipulation from robot-free
+    human demonstrations. A visual planner predicts five-link targets: the poses of the torso, both
+    wrists, and both feet. A reinforcement-learning whole-body tracker follows them on the robot.
+    Both policies train separately on the same recorded human poses, without retargeting. We
+    augment the training data of each policy to imitate the errors that the other makes at
+    deployment. On a real Unitree G1, Workhorse sorts boxes with its hands and a kick, catches a
+    thrown box, and topples and climbs a suitcase. During box sorting, we show recoveries after a
+    person pushes the robot or takes the box away. In a simulated copy of the demonstration room,
+    the system completes box sorting in 77% of episodes, and in 64% under 40&nbsp;N·s pushes. With
+    both policies retrained from the same demonstrations, a simulated second humanoid completes box
+    sorting in 83% of episodes without pushes.</p>
+  </div>
+</section>
+
+<section id="data" class="section alt">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Human data</h2>
+    <figure class="reveal">
+      <img class="frame" loading="lazy" decoding="async" src="./static/images/data_rig.jpg?v=1791296069" width="1920" height="1080"
+           alt="A demonstrator carrying a box, wearing a chest camera on a harness, a tracker on the
+                back of each hand and one on each shoe, with four base stations set around them.">
+    </figure>
+    <div class="two notes reveal">
+      <p><b>The setup.</b> Five wearable trackers (chest, both hands, both feet) and
+        one chest camera. Nothing on the head, no markers on the objects.</p>
+      <p><b>What is recorded.</b> The five wearable-tracker poses at 60&nbsp;Hz and the camera's
+        own video, put on one clock by three claps at the start of each session. One demonstrator
+        recorded 2.2&nbsp;h for box sorting, 1.2&nbsp;h for the suitcase task and 13&nbsp;min for
+        box catching.</p>
+    </div>
+
+  </div>
+</section>
+
+<section id="method" class="section">
+  <div class="wrap narrow">
+    <h2 class="reveal center">From human to humanoid</h2>
+
+    <h3 class="reveal">Alignment</h3>
+    <figure class="reveal">
+      <figcaption>Five wearable-tracker poses, one fixed offset per link. Nothing is retargeted.</figcaption>
+
+      <video class="frame" width="1280" height="720" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/data_bodies.jpg?v=1791290034">
+        <source src="./static/videos/data_bodies.mp4?v=1791205814" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/data_bodies.h264.mp4?v=1791295417" type="video/mp4">
+      </video>
+    </figure>
+
+    <h3 class="reveal">Whole-body tracker</h3>
+    <p class="figlead reveal">The whole-body tracker follows those same five-link targets, the
+      markers, here in simulation. For the H2, only the five mounts and the robot model change, and
+      both policies are retrained on the same demonstrations.</p>
+    <div class="grid two reveal">
+      <figure>
+        <div class="scene3d frame" data-lazy3d data-robot="g1">
+          <span class="chip">G1</span>
+          <span class="hint">Drag to turn</span>
+        </div></figure>
+      <figure>
+        <div class="scene3d frame" data-lazy3d data-robot="h2">
+          <span class="chip">H2</span>
+          <span class="hint">Drag to turn</span>
+        </div></figure>
+    </div>
+
+    <h3 class="reveal">Visual planner</h3>
+    <figure class="reveal">
+      <figcaption>Input: four images from the robot's own camera and nine five-link samples from the
+        last second. Output: a chunk of five-link targets 1.16&nbsp;s long, drawn as the skeleton
+        ahead of the robot. The flow-matching planner replans at 5&nbsp;Hz, and at each step the
+        whole-body tracker reads the next 0.2&nbsp;s of the chunk.</figcaption>
+
+      <div class="duo">
+        <div class="view take big frame">
+          <video width="1280" height="720" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/planner.jpg?v=1791295393">
+            <source src="./static/videos/planner.mp4?v=1791293259" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/planner.h264.mp4?v=1791295418" type="video/mp4">
+          </video></div>
+        <div class="view cam small frame">
+          <video width="1280" height="720" muted loop playsinline preload="none" data-poster="./static/images/planner_ego.jpg?v=1791290034"
+                 data-src="./static/videos/planner_ego.mp4?v=1791205888" data-src-h264="./static/videos/planner_ego.h264.mp4"></video>
+          <span class="chip">Robot's camera</span></div>
+      </div>
+    </figure>
+
+  </div>
+</section>
+
+<section id="results" class="section alt">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Results</h2>
+    <p class="lede center reveal">Three tasks on the real G1. The robot acts from its own camera and
+      proprioception alone, with no motion capture or teleoperation. Each task has its own planner
+      and tracker; the interface, the training recipe and the deployment stack are shared.</p>
+
+    <div class="gallery reveal">
+      <div class="slides">
+        <figure class="slide" data-name="Suitcase" data-thumb="./static/images/thumb_suitcase.jpg?v=1791295393">
+          <figcaption>Suitcase pushing, toppling and climbing.</figcaption>
+          <div class="duo">
+            <span class="chip auto">Fully Autonomous</span>
+            <div class="view take small frame">
+              <video width="1280" height="720" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/suitcase.jpg?v=1791295393">
+                <source src="./static/videos/suitcase.mp4?v=1791296128" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/suitcase.h264.mp4?v=1791296129" type="video/mp4">
+              </video></div>
+            <div class="view cam big frame">
+              <video width="1280" height="720" muted loop playsinline preload="none" data-poster="./static/images/suitcase_ego.jpg?v=1791290034"
+                     data-src="./static/videos/suitcase_ego.mp4?v=1791205884" data-src-h264="./static/videos/suitcase_ego.h264.mp4"></video>
+              <span class="chip">Robot's camera</span></div>
+          </div>
+        </figure>
+        <figure class="slide" data-name="Catching" data-thumb="./static/images/thumb_catch.jpg?v=1791295393">
+          <figcaption>Highly reactive box catching.</figcaption>
+          <div class="duo solo">
+            <span class="chip auto">Fully Autonomous</span>
+            <div class="view take big frame">
+              <video width="1280" height="720" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/catch.jpg?v=1791295393">
+                <source src="./static/videos/catch.mp4?v=1791291927" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/catch.h264.mp4?v=1791295417" type="video/mp4">
+              </video></div>
+          </div>
+        </figure>
+        <figure class="slide" data-name="Box sorting" data-thumb="./static/images/thumb_transport.jpg?v=1791295393">
+          <figcaption>Box sorting, with recoveries after a person pushes the robot or takes the box away.</figcaption>
+          <div class="duo solo">
+            <span class="chip auto">Fully Autonomous</span>
+            <div class="view take big frame">
+              <video width="960" height="540" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/transport.jpg?v=1791295393">
+                <source src="./static/videos/transport.mp4?v=1791292534" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/transport.h264.mp4?v=1791295418" type="video/mp4">
+              </video></div>
+          </div>
+        </figure>
+        <figure class="slide" data-name="Long run" data-thumb="./static/images/thumb_longrun.jpg?v=1791295393">
+          <figcaption>The same task, five minutes, no robot reset, real time.</figcaption>
+          <div class="duo">
+            <span class="chip auto">Fully Autonomous</span>
+            <div class="view take small frame">
+              <video width="960" height="540" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/longrun.jpg?v=1791295393">
+                <source src="./static/videos/longrun.mp4?v=1791293246" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/longrun.h264.mp4?v=1791295417" type="video/mp4">
+              </video></div>
+            <div class="view cam big frame">
+              <video width="1280" height="720" muted loop playsinline preload="none" data-poster="./static/images/longrun_ego.jpg?v=1791290034"
+                     data-src="./static/videos/longrun_ego.mp4?v=1791207363" data-src-h264="./static/videos/longrun_ego.h264.mp4"></video>
+              <span class="chip">Robot's camera</span></div>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="training" class="section">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Training</h2>
+
+    <h3 class="reveal">Whole-body tracker</h3>
+    <figure class="reveal">
+      <figcaption>On the robot, estimation, planning and tracking errors make the command drift
+        between replans, and it jumps back at each replan. Training reproduces this sawtooth: a
+        rigid drift of up to 10&nbsp;cm horizontally and 10&deg; in yaw, reset after a random 0.2 to
+        1&nbsp;s. The reward follows the drifted command. At step <i>t</i>, the tracker reads the
+        next 0.2&nbsp;s of the command, the blue dots.</figcaption>
+
+        <div class="wide"><svg class="aug" viewBox="0 0 889.0 250.0" role="img" aria-label="The command drifts away from the demonstrated motion between replans and jumps back at each replan; at step t the tracker reads the next six samples.">
+          <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#8C939C"/></marker></defs>
+          <line class="ax" x1="60.0" y1="210.0" x2="865.0" y2="210.0" marker-end="url(#ah)"/>
+          <line class="now" x1="350.0" y1="215.0" x2="350.0" y2="5.0"/>
+          <text class="lbl gray" x="350.0" y="236.0" text-anchor="middle"><tspan font-style="italic">t</tspan></text>
+          <text class="lbl gray" x="865.0" y="236.0" text-anchor="end">time</text>
+          <line class="rp" x1="100.0" y1="170.0" x2="100.0" y2="85.0"/>
+          <line class="rp" x1="220.0" y1="170.0" x2="220.0" y2="85.0"/>
+          <line class="rp" x1="400.0" y1="170.0" x2="400.0" y2="85.0"/>
+          <line class="rp" x1="500.0" y1="170.0" x2="500.0" y2="85.0"/>
+          <line class="rp" x1="620.0" y1="170.0" x2="620.0" y2="85.0"/>
+          <line class="rp" x1="700.0" y1="170.0" x2="700.0" y2="85.0"/>
+          <text class="lbl gray" x="500.0" y="79.0" text-anchor="middle">replan</text>
+          <path class="demo" d="M 80.0 160.0 C 90.0 159.2 120.0 158.3 140.0 155.0 C 160.0 151.7 178.3 145.0 200.0 140.0 C 221.7 135.0 245.0 128.3 270.0 125.0 C 295.0 121.7 326.7 120.0 350.0 120.0 C 373.3 120.0 388.3 121.7 410.0 125.0 C 431.7 128.3 456.7 135.0 480.0 140.0 C 503.3 145.0 526.7 151.7 550.0 155.0 C 573.3 158.3 595.0 159.2 620.0 160.0 C 645.0 160.8 686.7 160.0 700.0 160.0"/>
+          <text class="lbl human" x="710.0" y="160.0" text-anchor="start">demo</text>
+          <path class="synth" d="M 100.0 159.1 L 120.0 150.9 L 140.0 141.7 L 160.0 130.7 L 180.0 118.7 L 200.0 106.7 L 220.0 95.4"/>
+          <path class="synth" d="M 220.0 135.4 L 240.0 133.8 L 260.0 132.8 L 280.0 133.0 L 300.0 134.1 L 320.0 136.0 L 340.0 138.7 L 360.0 142.2 L 380.0 146.5 L 400.0 151.7"/>
+          <path class="synth" d="M 400.0 123.7 L 420.0 121.6 L 440.0 120.7 L 460.0 120.4 L 480.0 120.0 L 500.0 119.6"/>
+          <path class="synth" d="M 500.0 144.6 L 520.0 153.4 L 540.0 161.7 L 560.0 168.8 L 580.0 174.8 L 600.0 180.1 L 620.0 185.0"/>
+          <path class="synth" d="M 620.0 160.0 L 640.0 154.9 L 660.0 149.3 L 680.0 143.6 L 700.0 138.0"/>
+          <circle class="dot" cx="340.0" cy="138.7" r="5"/>
+          <circle class="dot" cx="351.0" cy="140.6" r="5"/>
+          <circle class="dot" cx="362.0" cy="142.6" r="5"/>
+          <circle class="dot" cx="373.0" cy="145.0" r="5"/>
+          <circle class="dot" cx="384.0" cy="147.5" r="5"/>
+          <circle class="dot" cx="395.0" cy="150.4" r="5"/>
+          <text class="lbl synth" x="160.0" y="74.0" text-anchor="middle">drifted command</text>
+          <text class="lbl intent" x="360.0" y="186.0" text-anchor="start">command window</text>
+        </svg></div>
+    </figure>
+
+    <h3 class="reveal">Visual planner</h3>
+    <figure class="reveal wipe">
+      <figcaption>Trained on a person, deployed on a robot. Each recorded image is edited once,
+        offline: the demonstrator's body segmented out, the hole inpainted, the robot rendered in
+        its place.</figcaption>
+
+      <div class="stage frame" style="--split: 50%">
+        <div class="pane after"><video width="1440" height="404" data-autoplay muted loop playsinline preload="none" data-poster="./static/images/vision_wipe.jpg?v=1791290034">
+          <source src="./static/videos/vision_wipe.mp4?v=1791015737" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+          <source src="./static/videos/vision_wipe.h264.mp4?v=1791295418" type="video/mp4"></video></div>
+        <div class="pane before"><video width="1440" height="404" data-autoplay muted loop playsinline preload="none" data-poster="./static/images/vision_wipe.jpg?v=1791290034">
+          <source src="./static/videos/vision_wipe.mp4?v=1791015737" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+          <source src="./static/videos/vision_wipe.h264.mp4?v=1791295418" type="video/mp4"></video></div>
+        <div class="handle"><span></span></div>
+        <span class="chip l">recorded</span>
+        <span class="chip r">edited</span>
+        <span class="hint">Drag the divider</span>
+      </div>
+    </figure>
+
+    <figure class="reveal">
+      <figcaption>The tracker never follows a chunk exactly, so at deployment the planner sees a
+        history that no demonstration contains. In training, the drifted history is the demonstrated
+        history moved by a random walk, going back in time from the observation time
+        <i>t</i><sub>0</sub>. The chunk stays the clean demonstration, so the planner learns to
+        recover from the drift.</figcaption>
+
+        <div class="wide"><svg class="aug" viewBox="0 0 889.0 250.0" role="img" aria-label="Going back in time from the observation time t0, the drifted five-link history moves away from the demonstrated motion, while the chunk after t0 stays on it.">
+          <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#8C939C"/></marker></defs>
+          <line class="ax" x1="60.0" y1="210.0" x2="865.0" y2="210.0" marker-end="url(#ah)"/>
+          <line class="now" x1="350.0" y1="215.0" x2="350.0" y2="5.0"/>
+          <text class="lbl gray" x="350.0" y="236.0" text-anchor="middle"><tspan font-style="italic">t</tspan>&#8320;</text>
+          <text class="lbl gray" x="865.0" y="236.0" text-anchor="end">time</text>
+          <path class="demo" d="M 80.0 160.0 C 90.0 159.2 120.0 158.3 140.0 155.0 C 160.0 151.7 178.3 145.0 200.0 140.0 C 221.7 135.0 245.0 128.3 270.0 125.0 C 295.0 121.7 326.7 120.0 350.0 120.0 C 373.3 120.0 388.3 121.7 410.0 125.0 C 431.7 128.3 456.7 135.0 480.0 140.0 C 503.3 145.0 526.7 151.7 550.0 155.0 C 573.3 158.3 595.0 159.2 620.0 160.0 C 645.0 160.8 686.7 160.0 700.0 160.0"/>
+          <text class="lbl human" x="710.0" y="160.0" text-anchor="start">demo</text>
+          <path class="synth" d="M 350.0 120.0 L 310.0 114.0 L 280.0 102.0 L 250.0 106.0 L 220.0 91.0 L 190.0 78.0 L 160.0 81.0 L 130.0 69.0 L 100.0 60.0"/>
+          <text class="lbl synth" x="250.0" y="51.0" text-anchor="middle">drifted history</text>
+          <path class="intent" d="M 350.0 166.0 L 350.0 172.0 L 700.0 172.0 L 700.0 166.0"/>
+          <text class="lbl intent" x="480.0" y="197.0" text-anchor="middle">chunk: clean demo</text>
+        </svg></div>
+    </figure>
+
+    <figure class="reveal warp">
+      <figcaption>The drift also moves the camera, which is fixed to the torso. Each image of the
+        history is warped to the view the camera would have had after the drift. The images then
+        agree with the drifted five-link history. The figure below runs the same warp live.</figcaption>
+
+      <div class="stage frame" data-src="./static/images/warp_source.png?v=1791015737">
+        <canvas class="gl" width="1152" height="648"></canvas>
+        <svg class="frustum" viewBox="0 0 330 230" aria-hidden="true"></svg>
+        <span class="chip angle"><span>0&deg;</span> pitch &nbsp; <span>0&deg;</span> yaw</span>
+        <span class="hint">Drag to turn the camera</span>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="deploy" class="section alt">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Deployment</h2>
+    <figure class="reveal">
+      <figcaption>The training data was synchronized, but the streams on the robot are not. So every
+        value carries the time it describes. The chunk starts at <i>t</i><sub>0</sub>, when the
+        newest image was captured, not when the chunk arrived. Actions already past (hollow) are
+        skipped. The tracker reads the next 0.2&nbsp;s of the chunk by timestamp, and each new chunk
+        continues the previous one where they overlap.</figcaption>
+
+      <div class="wide"><svg class="dep" viewBox="0 0 889.0 320.0" role="img" aria-label="Timestamps at deployment: both histories end at the capture time of the newest image, the chunk's actions are stamped from that instant, and hollow dots are actions already past when the chunk arrives.">
+        <defs><marker id="dpg" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="10" refX="12" refY="5" orient="auto"><path d="M0,0 L13,5 L0,10 z" fill="#8C939C"/></marker><marker id="dpr" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="10" refX="12" refY="5" orient="auto"><path d="M0,0 L13,5 L0,10 z" fill="#009E73"/></marker></defs>
+        <rect class="band" x="350.0" y="10.0" width="123.5" height="230.0"/>
+        <text class="lbl gray mid" x="411.8" y="36.0">camera</text>
+        <text class="lbl gray mid" x="411.8" y="52.0">delay +</text>
+        <text class="lbl gray mid" x="411.8" y="68.0">inference</text>
+        <line class="ax" x1="160.0" y1="240.0" x2="885.0" y2="240.0" marker-end="url(#dpg)"/>
+        <text class="lbl gray end" x="885.0" y="259.0"><tspan font-style="italic">t</tspan></text>
+        <line class="now" x1="350.0" y1="240.0" x2="350.0" y2="10.0"/>
+        <text class="lbl gray end" x="362.0" y="259.0"><tspan font-style="italic">t</tspan>₀</text>
+        <text class="lbl gray end" x="362.0" y="275.0">image captured</text>
+        <line class="now dash" x1="473.5" y1="240.0" x2="473.5" y2="10.0"/>
+        <text class="lbl" x="483.5" y="259.0">chunk</text>
+        <text class="lbl" x="483.5" y="275.0">arrives</text>
+        <text class="row robot end" x="150.0" y="64.0">five-link hist.</text>
+        <line class="robot" x1="170.0" y1="60.0" x2="350.0" y2="60.0"/>
+        <circle class="dotR" cx="170.0" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="192.5" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="215.0" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="237.5" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="260.0" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="282.5" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="305.0" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="327.5" cy="60.0" r="7.0"/>
+        <circle class="dotR" cx="350.0" cy="60.0" r="7.0"/>
+        <text class="row robot end" x="150.0" y="119.0">image hist.</text>
+        <rect class="img" x="338.0" y="103.0" width="24.0" height="24.0"/>
+        <rect class="img" x="293.0" y="103.0" width="24.0" height="24.0"/>
+        <rect class="img" x="248.0" y="103.0" width="24.0" height="24.0"/>
+        <rect class="img" x="203.0" y="103.0" width="24.0" height="24.0"/>
+        <text class="row intent end" x="150.0" y="189.0">chunk</text>
+        <rect class="ov" x="473.5" y="166.7" width="160.0" height="36.7"/>
+        <line class="intent" x1="350.0" y1="185.0" x2="865.0" y2="185.0"/>
+        <circle class="dotI past" cx="350.0" cy="185.0" r="5.5"/>
+        <circle class="dotI past" cx="386.0" cy="185.0" r="5.5"/>
+        <circle class="dotI past" cx="422.0" cy="185.0" r="5.5"/>
+        <circle class="dotI past" cx="458.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="494.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="530.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="566.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="602.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="638.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="674.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="710.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="746.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="782.0" cy="185.0" r="5.5"/>
+        <circle class="dotI" cx="818.0" cy="185.0" r="5.5"/>
+        <text class="lbl intent mid" x="733.5" y="218.0">action  <tspan font-style="italic">k</tspan>  at  <tspan font-style="italic">t</tspan>₀ + <tspan font-style="italic">k</tspan> Δ<tspan font-style="italic">t</tspan></text>
+        <line class="old" x1="473.5" y1="195.0" x2="633.5" y2="195.0"/>
+        <text class="lbl gray" x="493.5" y="152.0">overlap with previous chunk</text>
+        <line class="read" x1="473.5" y1="125.0" x2="473.5" y2="174.0" marker-end="url(#dpr)"/>
+        <text class="lbl robot" x="485.5" y="121.0">tracker reads at <tspan font-style="italic">t</tspan></text>
+      </svg></div>
+    </figure>
+  </div>
+</section>
+
+
+<section id="sim" class="section">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Simulation evaluation</h2>
+    <p class="lede center reveal">To test a policy before it goes on the robot, we scan the room
+      into a Gaussian splat and evaluate there.</p>
+
+    <p class="figlead reveal">Success rate on box sorting without pushes, 100 episodes each.
+      <b>G1: 77%.</b> <b>H2: 83%.</b> Under 40&nbsp;N·s pushes, the G1 succeeds in 64%.</p>
+    <div class="grid two reveal">
+      <figure class="tagged"><span class="chip">G1</span>
+        <video class="frame" width="720" height="406" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/sim_g1.jpg?v=1791290034">
+          <source src="./static/videos/sim_g1.mp4?v=1791205823" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/sim_g1.h264.mp4?v=1791295418" type="video/mp4"></video></figure>
+      <figure class="tagged"><span class="chip">H2</span>
+        <video class="frame" width="720" height="406" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/sim_h2.jpg?v=1791290034">
+          <source src="./static/videos/sim_h2.mp4?v=1791205832" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/sim_h2.h264.mp4?v=1791295418" type="video/mp4"></video></figure>
+    </div>
+
+    <figure class="reveal abl-fig">
+      <figcaption>Success on the G1 when one part changes.</figcaption>
+      <div class="abl-wrap">
+        <table class="abl">
+          <thead>
+            <tr><th></th><th>No pushes</th><th>Pushes</th></tr>
+          </thead>
+          <tbody>
+            <tr class="full"><td>Full system</td><td>77%</td><td>64%</td></tr>
+            <tr><td>Joint-angle command from IK</td><td>54%</td><td>42%</td></tr>
+            <tr><td>Targets relative to each link</td><td>5%</td><td>4%</td></tr>
+            <tr><td>No gravity direction in the history</td><td>1%</td><td>1%</td></tr>
+            <tr><td>No planner augmentation</td><td>20%</td><td>0%</td></tr>
+            <tr><td>No command augmentation</td><td>76%</td><td>52%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="failures" class="section alt">
+  <div class="wrap narrow">
+    <h2 class="reveal center">Failure cases</h2>
+    <figure class="reveal">
+      <video class="frame" width="1280" height="720" controls data-autoplay muted loop playsinline preload="none" data-poster="./static/images/failures.jpg?v=1791299131">
+        <source src="./static/videos/failures.mp4?v=1791299082" type='video/mp4; codecs="hvc1.2.4.L153.B0"'>
+        <source src="./static/videos/failures.h264.mp4?v=1791299131" type="video/mp4">
+      </video>
+    </figure>
+  </div>
+</section>
+
+<!-- The task sections, the long-horizon run, the failure case and the BibTeX are written and kept
+     in the history (commit 48c8e90); they come back once this part reads right. -->
+
+</main>
+
+<footer>
+  <p>The code is not released yet.</p>
+</footer>
+
+<!-- three's own example modules import it by name, so the name has to resolve; nothing is
+     fetched until the tracker figure is scrolled to. -->
+<script type="importmap">
+{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+             "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+</script>
+<script src="./static/js/site.js?v=137"></script>
+</body>
+</html>

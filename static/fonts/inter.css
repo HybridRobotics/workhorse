@@ -1,0 +1,5 @@
+/* Written by scripts/fetch_fonts.py: the latin subset of Inter, served from this page's
+   own origin so that opening the page does not wait on two of Google's.  The file is
+   variable, so the one face covers every weight in the range. */
+@font-face { font-family: Inter; font-style: normal; font-weight: 400 700;
+  font-display: swap; src: url('./inter.woff2') format('woff2'); }
